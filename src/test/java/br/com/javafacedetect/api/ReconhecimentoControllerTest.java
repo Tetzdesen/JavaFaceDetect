@@ -60,6 +60,29 @@ class ReconhecimentoControllerTest {
     }
 
     @Test
+    void deveDistinguirDuasPessoasCadastradasPassandoPelaDeteccao() throws Exception {
+        mockMvc.perform(multipart("/api/pessoas")
+                        .file(arquivo("imagens", "images/pessoa_a_cadastro.png"))
+                        .param("nome", "Pessoa A"))
+                .andExpect(status().isCreated());
+        mockMvc.perform(multipart("/api/pessoas")
+                        .file(arquivo("imagens", "images/pessoa_b_cadastro.png"))
+                        .param("nome", "Pessoa B"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(multipart("/api/reconhecimento")
+                        .file(arquivo("imagem", "images/pessoa_a_consulta.png")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reconhecido").value(true))
+                .andExpect(jsonPath("$.nome").value("Pessoa A"));
+        mockMvc.perform(multipart("/api/reconhecimento")
+                        .file(arquivo("imagem", "images/pessoa_b_consulta.png")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reconhecido").value(true))
+                .andExpect(jsonPath("$.nome").value("Pessoa B"));
+    }
+
+    @Test
     void deveRetornar422QuandoImagemSemRostoDetectavel() throws Exception {
         mockMvc.perform(multipart("/api/reconhecimento")
                         .file(arquivo("imagem", "images/sem_rosto.jpg")))
